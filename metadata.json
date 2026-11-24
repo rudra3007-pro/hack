@@ -1,0 +1,6 @@
+{
+  "name": "MargFlow",
+  "description": "Bus Traffic Model & Journey Planner turning live and historical bus GPS telemetry into city-wide traffic intelligence and travel-time predictions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

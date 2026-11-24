@@ -1,0 +1,351 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function hasValidParentUser(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+    }
+
+    // Validation Blueprints matching firebase-blueprint.json
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid',
+          'displayName',
+          'role',
+          'preferredCommuteMode',
+          'homeStopId',
+          'refreshIntervalSec',
+          'googleFormCompleted',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'role',
+          'preferredCommuteMode',
+          'homeStopId',
+          'refreshIntervalSec',
+          'googleFormCompleted',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.uid is string && data.uid == request.auth.uid && data.uid == userId &&
+        data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+        data.role is string && data.role == 'commuter' &&
+        data.preferredCommuteMode is string &&
+        data.preferredCommuteMode in ['fastest', 'least_congested', 'minimal_transfers'] &&
+        data.homeStopId is string && data.homeStopId.size() >= 1 && data.homeStopId.size() <= 64 &&
+        data.homeStopId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.refreshIntervalSec is number && data.refreshIntervalSec >= 2 && data.refreshIntervalSec <= 60 &&
+        data.googleFormCompleted is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPrivateInfo(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'provider', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'provider', 'updatedAt']) &&
+        data.uid is string && data.uid == request.auth.uid && data.uid == userId &&
+        data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 160 &&
+        data.provider is string && data.provider.size() >= 1 && data.provider.size() <= 32 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSavedRoute(data, userId, routeId) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'label',
+          'originName',
+          'originStopId',
+          'destinationName',
+          'destinationStopId',
+          'preferredBusRoute',
+          'estimatedMinutes',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id',
+          'userId',
+          'label',
+          'originName',
+          'originStopId',
+          'destinationName',
+          'destinationStopId',
+          'preferredBusRoute',
+          'estimatedMinutes',
+          'createdAt'
+        ]) &&
+        data.id is string && data.id == routeId &&
+        data.id.size() >= 1 && data.id.size() <= 64 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.userId is string && data.userId == request.auth.uid && data.userId == userId &&
+        data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.label is string && data.label.size() >= 1 && data.label.size() <= 80 &&
+        data.originName is string && data.originName.size() >= 1 && data.originName.size() <= 120 &&
+        data.originStopId is string && data.originStopId.size() >= 1 && data.originStopId.size() <= 64 &&
+        data.destinationName is string && data.destinationName.size() >= 1 && data.destinationName.size() <= 120 &&
+        data.destinationStopId is string && data.destinationStopId.size() >= 1 && data.destinationStopId.size() <= 64 &&
+        data.preferredBusRoute is string && data.preferredBusRoute.size() >= 1 && data.preferredBusRoute.size() <= 32 &&
+        data.estimatedMinutes is number && data.estimatedMinutes >= 1 && data.estimatedMinutes <= 600 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidBusTicket(data, userId, ticketId) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'pnrNumber',
+          'routeId',
+          'routeShortName',
+          'routeName',
+          'busType',
+          'originStopName',
+          'originStopId',
+          'destinationStopName',
+          'destinationStopId',
+          'travelDate',
+          'departureTime',
+          'passengerName',
+          'passengerAge',
+          'passengerGender',
+          'passengerPhone',
+          'seatList',
+          'totalFare',
+          'status',
+          'qrCodeToken',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id',
+          'userId',
+          'pnrNumber',
+          'routeId',
+          'routeShortName',
+          'routeName',
+          'busType',
+          'originStopName',
+          'originStopId',
+          'destinationStopName',
+          'destinationStopId',
+          'travelDate',
+          'departureTime',
+          'passengerName',
+          'passengerAge',
+          'passengerGender',
+          'passengerPhone',
+          'seatList',
+          'totalFare',
+          'status',
+          'qrCodeToken',
+          'createdAt'
+        ]) &&
+        data.id is string && data.id == ticketId &&
+        data.id.size() >= 1 && data.id.size() <= 64 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.userId is string && data.userId == request.auth.uid && data.userId == userId &&
+        data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.pnrNumber is string && data.pnrNumber.size() >= 1 && data.pnrNumber.size() <= 32 &&
+        data.pnrNumber.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.routeId is string && data.routeId.size() <= 64 &&
+        data.routeShortName is string && data.routeShortName.size() <= 32 &&
+        data.routeName is string && data.routeName.size() <= 120 &&
+        data.busType is string && data.busType.size() <= 64 &&
+        data.originStopName is string && data.originStopName.size() <= 120 &&
+        data.originStopId is string && data.originStopId.size() <= 64 &&
+        data.destinationStopName is string && data.destinationStopName.size() <= 120 &&
+        data.destinationStopId is string && data.destinationStopId.size() <= 64 &&
+        data.travelDate is string && data.travelDate.size() <= 32 &&
+        data.departureTime is string && data.departureTime.size() <= 32 &&
+        data.passengerName is string && data.passengerName.size() >= 1 && data.passengerName.size() <= 80 &&
+        data.passengerAge is number && data.passengerAge >= 1 && data.passengerAge <= 120 &&
+        data.passengerGender is string && data.passengerGender.size() <= 16 &&
+        data.passengerPhone is string && data.passengerPhone.size() <= 32 &&
+        data.seatList is string && data.seatList.size() <= 64 &&
+        data.totalFare is number && data.totalFare >= 0 && data.totalFare <= 100000 &&
+        data.status is string && data.status in ['CONFIRMED', 'CANCELLED'] &&
+        data.qrCodeToken is string && data.qrCodeToken.size() <= 128 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidFeedback(data) {
+      return data.keys().hasAll([
+          'userId',
+          'displayName',
+          'frequentRoute',
+          'commuteTimeSlot',
+          'satisfactionRating',
+          'congestionHotspotNote',
+          'submittedViaGoogleForm',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'userId',
+          'displayName',
+          'frequentRoute',
+          'commuteTimeSlot',
+          'satisfactionRating',
+          'congestionHotspotNote',
+          'submittedViaGoogleForm',
+          'createdAt'
+        ]) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+        data.frequentRoute is string && data.frequentRoute.size() >= 1 && data.frequentRoute.size() <= 64 &&
+        data.commuteTimeSlot is string && data.commuteTimeSlot.size() >= 1 && data.commuteTimeSlot.size() <= 32 &&
+        data.satisfactionRating is number && data.satisfactionRating >= 1 && data.satisfactionRating <= 5 &&
+        data.congestionHotspotNote is string && data.congestionHotspotNote.size() <= 500 &&
+        data.submittedViaGoogleForm is bool &&
+        data.createdAt is timestamp;
+    }
+
+    // Collection: /users/{userId}
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().uid == existing().uid &&
+        incoming().role == existing().role &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName',
+            'preferredCommuteMode',
+            'homeStopId',
+            'refreshIntervalSec',
+            'updatedAt'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'googleFormCompleted',
+            'updatedAt'
+          ])
+        );
+      allow delete: if false;
+
+      // Subcollection: /users/{userId}/private/{docId} (PII Isolation)
+      match /private/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && docId == 'pii' && isOwner(userId);
+        allow list: if false;
+        allow create: if isValidId(userId) && isValidId(docId) && docId == 'pii' &&
+          isOwner(userId) &&
+          isValidPrivateInfo(incoming(), userId) &&
+          hasValidParentUser(userId) &&
+          incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(docId) && docId == 'pii' &&
+          isOwner(userId) &&
+          isValidPrivateInfo(incoming(), userId) &&
+          hasValidParentUser(userId) &&
+          incoming().uid == existing().uid &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['email', 'provider', 'updatedAt']);
+        allow delete: if false;
+      }
+
+      // Subcollection: /users/{userId}/savedRoutes/{routeId} (Master Gate)
+      match /savedRoutes/{routeId} {
+        allow get: if isValidId(userId) && isValidId(routeId) &&
+          isOwner(userId) &&
+          hasValidParentUser(userId);
+        allow list: if isSignedIn() &&
+          request.auth.uid == userId &&
+          existing().userId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(routeId) &&
+          isOwner(userId) &&
+          isValidSavedRoute(incoming(), userId, routeId) &&
+          hasValidParentUser(userId) &&
+          incoming().createdAt == request.time;
+        allow update: if isValidId(userId) && isValidId(routeId) &&
+          isOwner(userId) &&
+          isValidSavedRoute(incoming(), userId, routeId) &&
+          hasValidParentUser(userId) &&
+          incoming().id == existing().id &&
+          incoming().userId == existing().userId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['label', 'estimatedMinutes', 'preferredBusRoute']);
+        allow delete: if isValidId(userId) && isValidId(routeId) &&
+          isOwner(userId) &&
+          hasValidParentUser(userId);
+      }
+
+      // Subcollection: /users/{userId}/tickets/{ticketId} (Bus Tickets)
+      match /tickets/{ticketId} {
+        allow get: if isValidId(userId) && isValidId(ticketId) &&
+          isOwner(userId) &&
+          hasValidParentUser(userId);
+        allow list: if isSignedIn() &&
+          request.auth.uid == userId &&
+          existing().userId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(ticketId) &&
+          isOwner(userId) &&
+          isValidBusTicket(incoming(), userId, ticketId) &&
+          hasValidParentUser(userId) &&
+          incoming().createdAt == request.time;
+        allow update: if isValidId(userId) && isValidId(ticketId) &&
+          isOwner(userId) &&
+          isValidBusTicket(incoming(), userId, ticketId) &&
+          hasValidParentUser(userId) &&
+          incoming().id == existing().id &&
+          incoming().userId == existing().userId &&
+          incoming().pnrNumber == existing().pnrNumber &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+        allow delete: if isValidId(userId) && isValidId(ticketId) &&
+          isOwner(userId) &&
+          hasValidParentUser(userId);
+      }
+    }
+
+    // Collection: /feedback/{feedbackId}
+    match /feedback/{feedbackId} {
+      allow get: if isValidId(feedbackId) &&
+        isSignedIn() &&
+        existing().userId == request.auth.uid;
+      allow list: if isSignedIn() &&
+        existing().userId == request.auth.uid;
+      allow create: if isValidId(feedbackId) &&
+        isSignedIn() &&
+        isValidFeedback(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isValidId(feedbackId) &&
+        isSignedIn() &&
+        existing().userId == request.auth.uid;
+    }
+  }
+}

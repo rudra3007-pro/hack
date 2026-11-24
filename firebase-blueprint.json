@@ -1,0 +1,403 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Commuter preferences and app settings for an authenticated user (PII isolated to private subcollection).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the profile owner.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name shown in the dashboard header and profile.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "role": {
+          "type": "string",
+          "description": "Standard commuter role.",
+          "enum": ["commuter"]
+        },
+        "preferredCommuteMode": {
+          "type": "string",
+          "description": "Default journey planning optimization preference.",
+          "enum": ["fastest", "least_congested", "minimal_transfers"]
+        },
+        "homeStopId": {
+          "type": "string",
+          "description": "Default origin transit stop ID.",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "refreshIntervalSec": {
+          "type": "number",
+          "description": "Live bus GPS polling cadence in seconds."
+        },
+        "googleFormCompleted": {
+          "type": "boolean",
+          "description": "Whether the user completed the commuter travel preference form."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest profile update."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "role",
+        "preferredCommuteMode",
+        "homeStopId",
+        "refreshIntervalSec",
+        "googleFormCompleted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated private account contact information for the authenticated user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address.",
+          "maxLength": 160
+        },
+        "provider": {
+          "type": "string",
+          "description": "Authentication provider used.",
+          "maxLength": 32
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest update."
+        }
+      },
+      "required": ["uid", "email", "provider", "updatedAt"]
+    },
+    "SavedRoute": {
+      "title": "SavedRoute",
+      "description": "A user-bookmarked bus journey corridor between two transit points in Uttar Pradesh.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the saved route.",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "label": {
+          "type": "string",
+          "description": "Short commuter label such as Charbagh to Gomti Nagar.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "originName": {
+          "type": "string",
+          "description": "Origin stop or place name.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "originStopId": {
+          "type": "string",
+          "description": "Stop ID or coordinate token for origin.",
+          "maxLength": 64
+        },
+        "destinationName": {
+          "type": "string",
+          "description": "Destination stop or place name.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "destinationStopId": {
+          "type": "string",
+          "description": "Stop ID or coordinate token for destination.",
+          "maxLength": 64
+        },
+        "preferredBusRoute": {
+          "type": "string",
+          "description": "Recommended bus route label.",
+          "maxLength": 32
+        },
+        "estimatedMinutes": {
+          "type": "number",
+          "description": "Predicted travel duration in minutes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when saved."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "label",
+        "originName",
+        "originStopId",
+        "destinationName",
+        "destinationStopId",
+        "preferredBusRoute",
+        "estimatedMinutes",
+        "createdAt"
+      ]
+    },
+    "BusTicket": {
+      "title": "BusTicket",
+      "description": "An e-ticket booking record for a public or express bus in Uttar Pradesh.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the ticket document.",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Passenger Firebase Auth UID.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "pnrNumber": {
+          "type": "string",
+          "description": "Official booking PNR token.",
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "routeId": {
+          "type": "string",
+          "description": "Bus route identifier.",
+          "maxLength": 64
+        },
+        "routeShortName": {
+          "type": "string",
+          "description": "Route number or badge.",
+          "maxLength": 32
+        },
+        "routeName": {
+          "type": "string",
+          "description": "Full route title.",
+          "maxLength": 120
+        },
+        "busType": {
+          "type": "string",
+          "description": "Bus operational tier.",
+          "maxLength": 64
+        },
+        "originStopName": {
+          "type": "string",
+          "description": "Boarding terminal name.",
+          "maxLength": 120
+        },
+        "originStopId": {
+          "type": "string",
+          "description": "Boarding terminal stop code.",
+          "maxLength": 64
+        },
+        "destinationStopName": {
+          "type": "string",
+          "description": "Destination terminal name.",
+          "maxLength": 120
+        },
+        "destinationStopId": {
+          "type": "string",
+          "description": "Destination terminal stop code.",
+          "maxLength": 64
+        },
+        "travelDate": {
+          "type": "string",
+          "description": "Travel date in YYYY-MM-DD.",
+          "maxLength": 32
+        },
+        "departureTime": {
+          "type": "string",
+          "description": "Scheduled departure clock.",
+          "maxLength": 32
+        },
+        "passengerName": {
+          "type": "string",
+          "description": "Full passenger name.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "passengerAge": {
+          "type": "number",
+          "description": "Passenger age in years."
+        },
+        "passengerGender": {
+          "type": "string",
+          "description": "Passenger gender.",
+          "maxLength": 16
+        },
+        "passengerPhone": {
+          "type": "string",
+          "description": "Passenger contact number.",
+          "maxLength": 32
+        },
+        "seatList": {
+          "type": "string",
+          "description": "Comma-separated seat assignments e.g. 2A, 2B.",
+          "maxLength": 64
+        },
+        "totalFare": {
+          "type": "number",
+          "description": "Total fare charged in INR."
+        },
+        "status": {
+          "type": "string",
+          "description": "Ticket booking status.",
+          "enum": ["CONFIRMED", "CANCELLED"]
+        },
+        "qrCodeToken": {
+          "type": "string",
+          "description": "Security token for onboard QR validation.",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when ticket was booked."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "pnrNumber",
+        "routeId",
+        "routeShortName",
+        "routeName",
+        "busType",
+        "originStopName",
+        "originStopId",
+        "destinationStopName",
+        "destinationStopId",
+        "travelDate",
+        "departureTime",
+        "passengerName",
+        "passengerAge",
+        "passengerGender",
+        "passengerPhone",
+        "seatList",
+        "totalFare",
+        "status",
+        "qrCodeToken",
+        "createdAt"
+      ]
+    },
+    "CommuterFeedback": {
+      "title": "CommuterFeedback",
+      "description": "Non-credential commuter travel preference and platform feedback submission.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Author Firebase Auth UID.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Commuter name.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "frequentRoute": {
+          "type": "string",
+          "description": "Most frequently used bus corridor or route.",
+          "maxLength": 64
+        },
+        "commuteTimeSlot": {
+          "type": "string",
+          "description": "Typical travel window.",
+          "maxLength": 32
+        },
+        "satisfactionRating": {
+          "type": "number",
+          "description": "Rating from 1 to 5."
+        },
+        "congestionHotspotNote": {
+          "type": "string",
+          "description": "Optional note about bottlenecks or feedback.",
+          "maxLength": 500
+        },
+        "submittedViaGoogleForm": {
+          "type": "boolean",
+          "description": "Indicates if user also submitted via external Google Form."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of submission."
+        }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "frequentRoute",
+        "commuteTimeSlot",
+        "satisfactionRating",
+        "congestionHotspotNote",
+        "submittedViaGoogleForm",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Owner-isolated commuter profile and dashboard configuration."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": {
+        "$ref": "#/entities/UserPrivateInfo"
+      },
+      "description": "Isolated PII document (email/provider) readable and writable only by the profile owner."
+    },
+    "/users/{userId}/savedRoutes/{routeId}": {
+      "schema": {
+        "$ref": "#/entities/SavedRoute"
+      },
+      "description": "Saved bus journey corridors belonging to the parent user document."
+    },
+    "/users/{userId}/tickets/{ticketId}": {
+      "schema": {
+        "$ref": "#/entities/BusTicket"
+      },
+      "description": "Booked bus e-tickets belonging to the parent user document."
+    },
+    "/feedback/{feedbackId}": {
+      "schema": {
+        "$ref": "#/entities/CommuterFeedback"
+      },
+      "description": "Commuter travel preferences and corridor feedback submissions (no passwords or PII)."
+    }
+  }
+}
